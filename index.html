@@ -34,15 +34,14 @@
   html,body{
     margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;
     -webkit-font-smoothing:antialiased;
-    overflow-x:hidden; /* impedisce che un elemento troppo largo "tagli" la pagina fuori schermo */
-    overscroll-behavior-y:contain; /* evita il rimbalzo/pull-to-refresh brusco tipico dei siti in webview Android */
+    overflow-x:hidden;
+    overscroll-behavior-y:contain;
     width:100%;
   }
   a{color:inherit;text-decoration:none;}
 
   .app{
     max-width:1100px;margin:0 auto;
-    /* padding adattivo: rispetta le safe-area (notch, barra gesture Android) su ogni dispositivo */
     padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
     width:100%;
   }
@@ -66,7 +65,6 @@
     overflow-wrap:anywhere;
   }
 
-  /* Adattamento per schermi molto stretti (telefoni Android economici, ~320-380px) */
   @media(max-width:380px){
     .app{padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right));}
     .brand h1{font-size:32px;}
@@ -151,7 +149,7 @@
   .news-card{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);transition:all .15s;}
   .news-card:hover .news-title a{color:var(--brand-accent);}
   .news-num{font-family:'JetBrains Mono',monospace;color:var(--brand-accent);font-weight:700;font-size:14px;min-width:24px;flex:none;}
-  .news-card > div{min-width:0;flex:1;} /* CORRETTO: senza min-width:0 un titolo lungo "spinge" fuori la pagina in orizzontale */
+  .news-card > div{min-width:0;flex:1;}
   .news-title{font-family:'Inter',sans-serif;font-size:15px;font-weight:600;line-height:1.4;margin:0 0 4px;overflow-wrap:break-word;word-break:break-word;}
   .news-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
   .badge-source{background:var(--paper-hover);padding:2px 6px;border-radius:4px;color:var(--ink);font-weight:600;}
@@ -315,17 +313,13 @@
 
   const el = (id) => document.getElementById(id);
 
-  // Token per annullare richieste di rete diventate obsolete (cambio rapido di città/sezione)
   let currentRequestId = 0;
-
-  // Gestione del ciclo di controllo periodico per le notifiche di nuove notizie
   let notifyPollTimer = null;
-  const NOTIFY_POLL_MS = 6 * 60 * 1000; // ogni 6 minuti
+  const NOTIFY_POLL_MS = 6 * 60 * 1000;
   const SEEN_NEWS_KEY = 'citynews_seen_v1';
 
-  // Cache in-memoria di breve durata per ridurre le chiamate ai proxy ed evitare i limiti di rate
   const newsCache = new Map();
-  const CACHE_TTL_MS = 4 * 60 * 1000; // 4 minuti
+  const CACHE_TTL_MS = 4 * 60 * 1000;
 
   const weatherIcons = {
     sun: `<svg viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
@@ -341,7 +335,6 @@
 
   function cityKey(c){ return (c.name+'|'+(c.country||'')).toLowerCase(); }
 
-  /* Orologio & Data in Tempo Reale */
   function startLiveClock(){
     const updateTime = () => {
       const city = cities.find(c => cityKey(c) === activeKey);
@@ -383,7 +376,6 @@
     loadData();
   }
 
-  /* Formatta una data RSS in stringa leggibile it-IT */
   function formatPubDate(raw){
     if(!raw) return '';
     const d = new Date(raw);
@@ -391,7 +383,6 @@
     return d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) + ' - ' + d.toLocaleDateString('it-IT', {day:'numeric', month:'short'});
   }
 
-  /* Google News mette spesso " - NomeTestata" alla fine del titolo: lo separiamo per usarlo come fonte reale */
   function splitGoogleTitle(rawTitle, fallbackSource){
     const title = (rawTitle || '').trim();
     const idx = title.lastIndexOf(' - ');
@@ -417,17 +408,12 @@
     });
   }
 
-  /* Fetch RSS con catena di proxy di fallback (CORS / rate-limit), cache breve e timeout */
   async function fetchRSS(rssUrl){
     const cached = newsCache.get(rssUrl);
     if(cached && (Date.now() - cached.time) < CACHE_TTL_MS){
       return cached.items;
     }
 
-    // ORDINE IMPORTANTE: rss2json senza chiave a pagamento limita SEMPRE il risultato a 10 notizie
-    // ed è spesso bloccato da limiti condivisi globalmente (causa dei blocchi "infiniti").
-    // Lo mettiamo per ultimo, come ultima spiaggia: i primi 3 proxy leggono l'XML "grezzo"
-    // di Google News (che tipicamente contiene fino a ~50-100 notizie) senza alcun tetto artificiale.
     const proxies = [
       { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`, type: 'xml' },
       { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`, type: 'xml' },
@@ -470,7 +456,6 @@
     return [];
   }
 
-  /* Recupero intelligente notizie di categoria senza mai restituire liste vuote se i dati esistono */
   async function fetchCategoryItems(cityName, admin1, catKey){
     let queryTerm = cityName;
     if(settings.includeProvince && admin1 && admin1.toLowerCase() !== cityName.toLowerCase()){
@@ -480,8 +465,6 @@
     let searchStr = catKey ? `${queryTerm} ${catKey}` : queryTerm;
     let items = await fetchRSS(`https://news.google.com/rss/search?q=${encodeURIComponent(searchStr)}&hl=it&gl=IT&ceid=IT:it`);
 
-    // Se la ricerca con categoria specifica non trova nulla, recupera le notizie generali della città
-    // per non lasciare mai vuoto (un solo tentativo di riserva, non due, per non raddoppiare i tempi di attesa)
     if(!items.length && catKey){
       items = await fetchRSS(`https://news.google.com/rss/search?q=${encodeURIComponent(cityName)}&hl=it&gl=IT&ceid=IT:it`);
     }
@@ -508,28 +491,22 @@
       if(retryBtn) retryBtn.addEventListener('click', () => renderNews(city));
     }, WATCHDOG_MS);
 
-    // Nota: per "Posizione Attuale" usiamo il nome città reale risolto da locateUser() tramite reverse-geocoding,
-    // quindi city.name qui è già una città vera (es. "Torino") e non più il generico "Italia".
     let cityName = city.name;
     let admin1 = city.admin1 || '';
-
     let items = [];
 
     if(activeCategory){
-      // Sezione singola: recupera fino a 50 notizie dedicate
       items = await fetchCategoryItems(cityName, admin1, activeCategory);
-      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // richiesta obsoleta, ignora
+      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; }
       items = items.slice(0, 50);
     } else {
-      // Sezione "Tutte": recupera in parallelo le 4 sezioni principali + notizie generali
       const categories = ['', 'cronaca', 'sport', 'eventi', 'politica'];
       const results = await Promise.all(categories.map(cat => fetchCategoryItems(cityName, admin1, cat)));
-      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // richiesta obsoleta, ignora
+      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; }
 
       let combined = [];
       results.forEach(list => { combined = combined.concat(list); });
 
-      // Filtro anti-duplicati basato sia sul link che sulle prime 30 lettere del titolo
       const seen = new Set();
       items = combined.filter(it => {
         if(!it.title) return false;
@@ -542,22 +519,17 @@
         return true;
       });
 
-      // Sezione "Tutte" unisce fino a 200 notizie totali
       items = items.slice(0, 200);
     }
 
-    if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // ultimo controllo prima di scrivere nel DOM
+    if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; }
     clearTimeout(watchdogTimer);
-    if(watchdogFired) return; // il messaggio di timeout è già stato mostrato, non sovrascriviamo con dati arrivati in ritardo
+    if(watchdogFired) return;
 
     if(!items.length){
-      // IMPORTANTE: non mostriamo più un feed nazionale generico come "riempitivo":
-      // mostriamo un messaggio onesto e un pulsante per riprovare, così l'utente non vede
-      // notizie non inerenti spacciate per locali.
       container.innerHTML = `
         <div style="font-size:13px;color:var(--ink-soft);padding:10px 0;">
           Nessuna notizia trovata al momento per la categoria "<b>${activeCategory || 'Tutte'}</b>" a ${cityName}.
-          Può capitare se i servizi di notizie sono momentaneamente sovraccarichi.
           <div style="margin-top:8px;"><button class="btn btn-secondary" id="btnRetryNews" style="font-size:12px;padding:6px 12px;">🔄 Riprova</button></div>
         </div>`;
       const retryBtn = document.getElementById('btnRetryNews');
@@ -684,354 +656,286 @@
         <button class="city-pill ${cityKey(c)===activeKey?'active':''}" data-key="${cityKey(c)}">
           🏛️ ${c.name}
         </button>
-        ${cities.length > 1 ? `<button class="btn-remove-city" data-remove="${cityKey(c)}" title="Rimuovi città">✕</button>` : ''}
+        <button class="btn-remove-city" data-key="${cityKey(c)}" title="Rimuovi città">✕</button>
       </div>
     `).join('');
 
-    el('cityTabs').querySelectorAll('.city-pill').forEach(b => {
-      b.addEventListener('click', ()=>{
-        activeKey = b.dataset.key;
+    el('cityTabs').querySelectorAll('.city-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeKey = btn.getAttribute('data-key');
         renderTabs();
         loadData();
       });
     });
 
-    el('cityTabs').querySelectorAll('.btn-remove-city').forEach(b => {
-      b.addEventListener('click', (e)=> removeCity(b.dataset.remove, e));
+    el('cityTabs').querySelectorAll('.btn-remove-city').forEach(btn => {
+      btn.addEventListener('click', (e) => removeCity(btn.getAttribute('data-key'), e));
     });
   }
 
   function loadData(){
-    const city = cities.find(c => cityKey(c) === activeKey);
+    const city = cities.find(c => cityKey(c) === activeKey) || cities[0];
     if(!city) return;
-    const provStr = (settings.includeProvince && city.admin1) ? ` - Prov/Reg: ${city.admin1}` : '';
-    el('newsCityLabel').textContent = `${city.name} (${city.country || 'IT'})${provStr} 🇮🇹`;
+    activeKey = cityKey(city);
+
+    el('newsCityLabel').textContent = city.name.toUpperCase();
     renderNews(city);
     renderWeather(city);
-    el('weatherDetails').classList.remove('open');
   }
 
-  /* Geocoding e Correttore Duplicati */
   async function searchCities(query){
-    const container = el('searchResults');
-    container.innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">Ricerca in corso...</div>`;
+    if(!query.trim()) return;
+    const resultsContainer = el('searchResults');
+    resultsContainer.innerHTML = '<div style="font-size:12px;color:var(--ink-soft);">Ricerca in corso...</div>';
+
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=it`);
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=it&format=json`);
       const data = await res.json();
-      
-      if(!data.results || !data.results.length){
-        container.innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">Nessuna città trovata. Prova a specificare la nazione.</div>`;
+
+      if(!data.results || data.results.length === 0){
+        resultsContainer.innerHTML = '<div style="font-size:12px;color:var(--ink-soft);">Nessuna città trovata.</div>';
         return;
       }
 
-      container.innerHTML = data.results.map(item => {
-        const adminStr = item.admin1 ? `, ${item.admin1}` : '';
-        const countryStr = item.country ? ` (${item.country})` : '';
-        return `
-          <div class="city-item" data-json='${JSON.stringify({name: item.name, country: item.country||'', lat: item.latitude, lon: item.longitude, admin1: item.admin1||''})}'>
-            <span><b>${item.name}</b>${adminStr}${countryStr}</span>
-            <span style="color:var(--brand-accent);">Seleziona ＋</span>
-          </div>
-        `;
-      }).join('');
+      resultsContainer.innerHTML = data.results.map(item => `
+        <div class="city-item" data-json='${JSON.stringify({
+          name: item.name,
+          country: item.country || '',
+          lat: item.latitude,
+          lon: item.longitude,
+          admin1: item.admin1 || ''
+        })}'>
+          <span><b>${item.name}</b> ${item.admin1 ? `(${item.admin1})` : ''}</span>
+          <small style="color:var(--ink-soft);">${item.country || ''}</small>
+        </div>
+      `).join('');
 
-      container.querySelectorAll('.city-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const newCity = JSON.parse(btn.dataset.json);
-          if(!cities.some(c => cityKey(c) === cityKey(newCity))){
-            cities.push(newCity);
+      resultsContainer.querySelectorAll('.city-item').forEach(elItem => {
+        elItem.addEventListener('click', () => {
+          const c = JSON.parse(elItem.getAttribute('data-json'));
+          const key = cityKey(c);
+          
+          if(!cities.some(x => cityKey(x) === key)){
+            cities.push(c);
             saveStorage();
           }
-          activeKey = cityKey(newCity);
-          el('addPanel').classList.remove('open');
-          container.innerHTML = '';
-          el('citySearchInput').value = '';
+          
+          activeKey = key;
           renderTabs();
           loadData();
+          el('addPanel').classList.remove('open');
+          resultsContainer.innerHTML = '';
+          el('citySearchInput').value = '';
         });
       });
-    } catch(e){
-      container.innerHTML = `<div style="font-size:12px;color:red;">Errore durante la ricerca.</div>`;
+    } catch(e) {
+      resultsContainer.innerHTML = '<div style="font-size:12px;color:#DC2626;">Errore durante la ricerca.</div>';
     }
   }
 
-  /* Rilevamento Posizione GPS con vero reverse-geocoding (prima restava sempre su "Italia" generico) */
-  function locateUser(){
+  async function locateUser(){
     if(!navigator.geolocation){
-      alert('Geolocalizzazione non supportata dal tuo browser.');
+      alert("La geolocalizzazione non è supportata dal tuo browser.");
       return;
     }
-    navigator.geolocation.getCurrentPosition(async (pos)=>{
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
 
-      // BUG CORRETTO: l'endpoint open-meteo /v1/search NON supporta il reverse-geocoding
-      // (accetta solo un "name" testuale), quindi prima la città restava sempre "Italia" -> notizie
-      // nazionali generiche invece che locali. Usiamo Nominatim (OpenStreetMap) per il reverse geocoding.
-      let cityName = 'Posizione Attuale';
-      let admin1 = '';
-      let country = 'IT';
-
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=it`);
-        if(res.ok){
-          const data = await res.json();
-          const addr = data.address || {};
-          cityName = addr.city || addr.town || addr.village || addr.municipality || addr.county || cityName;
-          admin1 = addr.state || addr.region || '';
-          country = (addr.country_code || 'it').toUpperCase();
-        }
-      } catch(e){
-        // Se il reverse-geocoding fallisce, avvisiamo l'utente invece di mostrare notizie generiche mascherate da locali
-        alert('Impossibile determinare il nome della tua città. Riprova o cercala manualmente.');
-        return;
-      }
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        const data = await res.json();
+        const addr = data.address || {};
+        const cityName = addr.city || addr.town || addr.village || addr.municipality || "Posizione Attuale";
 
-      const newCity = { name: cityName, country: country, lat: lat, lon: lon, admin1: admin1 };
-      if(!cities.some(c => cityKey(c) === cityKey(newCity))){
-        cities.unshift(newCity);
-        saveStorage();
+        const newCity = {
+          name: cityName,
+          country: addr.country || "Italia",
+          lat: lat,
+          lon: lon,
+          admin1: addr.state || addr.region || ""
+        };
+
+        const key = cityKey(newCity);
+        if(!cities.some(x => cityKey(x) === key)){
+          cities.unshift(newCity);
+          saveStorage();
+        }
+
+        activeKey = key;
+        renderTabs();
+        loadData();
+      } catch(e) {
+        alert("Impossibile recuperare il nome della tua città.");
       }
-      activeKey = cityKey(newCity);
-      renderTabs();
-      loadData();
-    }, ()=>{
-      alert('Impossibile accedere alla tua posizione GPS.');
+    }, () => {
+      alert("Permesso di geolocalizzazione negato o non disponibile.");
     });
   }
 
-  /* ============================================================
-     SISTEMA DI NOTIFICHE REALI PER NUOVE NOTIZIE
-     ============================================================
-     Nota tecnica importante: su Android/Chrome il costruttore diretto
-     `new Notification()` spesso NON funziona (è bloccato dal browser mobile);
-     serve passare dal Service Worker (`registration.showNotification`), che
-     è quello che usiamo qui sotto. Per questo motivo il Service Worker
-     (sw.js) non è solo "offline caching" ma un requisito per le notifiche
-     su telefono.
-     Limite onesto: funziona mentre l'app è aperta (anche in tab in
-     background); se il browser/app viene chiuso del tutto, il controllo si
-     ferma finché non lo riapri (non c'è un server push dietro, essendo
-     un'app senza backend). */
-
-  function loadSeenStore(){
-    try { return JSON.parse(localStorage.getItem(SEEN_NEWS_KEY)) || {}; } catch(e){ return {}; }
-  }
-  function saveSeenStore(store){
-    localStorage.setItem(SEEN_NEWS_KEY, JSON.stringify(store));
-  }
-
-  async function showRealNotification(title, body, link, tag){
-    if(!('Notification' in window) || Notification.permission !== 'granted') return;
-    try {
-      if('serviceWorker' in navigator){
-        const reg = await navigator.serviceWorker.ready;
-        await reg.showNotification(title, {
-          body,
-          icon: 'icon-192.png',
-          badge: 'icon-192.png',
-          tag: tag || link,
-          data: { link }
-        });
-      } else {
-        // Fallback per browser desktop senza service worker attivo
-        const n = new Notification(title, { body, icon: 'icon-192.png', data: { link } });
-        n.onclick = () => { window.open(link, '_blank'); n.close(); };
-      }
-    } catch(e){ /* silenzioso: non blocchiamo l'app se le notifiche falliscono */ }
-  }
-
-  /* Controlla le notizie nuove per una singola città e notifica solo quelle mai viste prima */
-  async function checkCityForNewNews(city, seenStore){
-    const cKey = cityKey(city);
-    const cityName = city.name;
-    const items = await fetchCategoryItems(cityName, city.admin1 || '', '');
-    if(!items.length) return;
-
-    const isFirstRun = !seenStore[cKey];
-    const seenLinks = new Set(isFirstRun ? [] : seenStore[cKey].links);
-
-    const freshItems = items.filter(it => it.link && !seenLinks.has(it.link));
-
-    // Aggiorna lo storico "visto" per questa città (limitato per non far crescere lo storage all'infinito)
-    const updatedLinks = Array.from(new Set([...(seenStore[cKey] ? seenStore[cKey].links : []), ...items.map(i=>i.link).filter(Boolean)])).slice(-400);
-    seenStore[cKey] = { time: Date.now(), links: updatedLinks };
-
-    if(isFirstRun){
-      // Primo controllo per questa città: creiamo solo la base di partenza, senza notificare
-      // tutte le notizie già esistenti (altrimenti la prima volta arriverebbe una raffica di notifiche).
-      return;
-    }
-
-    if(!freshItems.length) return;
-
-    if(freshItems.length === 1){
-      const it = freshItems[0];
-      await showRealNotification(`📰 ${cityName}`, it.title, it.link, it.link);
-    } else {
-      // Più notizie nuove insieme: una notifica riassuntiva invece di una raffica
-      await showRealNotification(
-        `📰 ${cityName} — ${freshItems.length} nuove notizie`,
-        freshItems.slice(0, 3).map(i => '• ' + i.title).join('\n'),
-        freshItems[0].link,
-        `${cKey}-batch`
-      );
-    }
-  }
-
-  async function pollForNewNews(){
-    if(!settings.notificationsEnabled) return;
-    if(!('Notification' in window) || Notification.permission !== 'granted') return;
-
-    const targets = settings.multiCityNotify ? cities.slice() : cities.filter(c => cityKey(c) === activeKey);
-    if(!targets.length) return;
-
-    const seenStore = loadSeenStore();
-    for(const city of targets){
-      try { await checkCityForNewNews(city, seenStore); } catch(e){ /* continua con le altre città */ }
-    }
-    saveSeenStore(seenStore);
-  }
-
-  function startNotifyPolling(){
-    stopNotifyPolling();
-    // Primo giro subito (stabilisce la base senza spam), poi un controllo periodico
-    pollForNewNews();
-    notifyPollTimer = setInterval(pollForNewNews, NOTIFY_POLL_MS);
-  }
-  function stopNotifyPolling(){
-    if(notifyPollTimer){ clearInterval(notifyPollTimer); notifyPollTimer = null; }
-  }
-
+  /* Gestione Notifiche Push */
   function updateNotifyButtonLabel(){
     const btn = el('btnNotify');
     if(!btn) return;
-    btn.textContent = settings.notificationsEnabled ? '🔕 Disattiva Notifiche' : '🔔 Attiva Notifiche';
+    if('Notification' in window && Notification.permission === 'granted'){
+      btn.textContent = '🔔 Notifiche Attive';
+      btn.style.background = '#10B981';
+      btn.style.color = '#FFF';
+    } else {
+      btn.textContent = 'Attiva Notifiche';
+      btn.style.background = '';
+      btn.style.color = '';
+    }
   }
 
-  async function toggleNotifications(){
-    if(settings.notificationsEnabled){
-      settings.notificationsEnabled = false;
-      stopNotifyPolling();
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      updateNotifyButtonLabel();
-      return;
-    }
-
+  async function requestNotificationPermission(){
     if(!('Notification' in window)){
-      alert('Notifiche non supportate da questo browser.');
-      return;
-    }
-    try {
-      const perm = await Notification.requestPermission();
-      if(perm !== 'granted'){
-        alert('⚠️ Permesso negato dal browser.');
-        return;
-      }
-    } catch(e){
-      alert('Impossibile richiedere le notifiche.');
+      alert('Il tuo browser non supporta le notifiche di sistema.');
       return;
     }
 
-    settings.notificationsEnabled = true;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    const permission = await Notification.requestPermission();
     updateNotifyButtonLabel();
-    const targetMsg = settings.multiCityNotify ? 'tutte le città in lista' : 'la città attiva';
-    alert(`🔔 Notifiche attivate per ${targetMsg}. Riceverai un avviso quando esce una notizia nuova (controllo ogni ~6 minuti, app aperta).`);
-    startNotifyPolling();
+
+    if(permission === 'granted'){
+      new Notification('City News', {
+        body: 'Le notifiche per notizie ed avvisi locali sono ora attive!',
+        icon: 'icon-192.png'
+      });
+      startNotificationPolling();
+    } else if(permission === 'denied'){
+      alert('Hai bloccato le notifiche nelle impostazioni del browser. Per attivarle, modifica i permessi del sito.');
+    }
   }
 
-  function setupEvents(){
-    const togglePanel = (p) => {
-      ['addPanel','globalPanel','settingsPanel'].forEach(id => {
-        el(id).classList.toggle('open', id === p && !el(id).classList.contains('open'));
-      });
-    };
+  function getSeenNews(){
+    try { return new Set(JSON.parse(localStorage.getItem(SEEN_NEWS_KEY)) || []); }
+    catch(e){ return new Set(); }
+  }
 
-    el('btnAddCity').addEventListener('click', ()=> togglePanel('addPanel'));
-    el('btnGeo').addEventListener('click', locateUser);
-    el('btnGlobalNews').addEventListener('click', ()=> {
+  function saveSeenNews(seenSet){
+    try {
+      const arr = Array.from(seenSet).slice(-300);
+      localStorage.setItem(SEEN_NEWS_KEY, JSON.stringify(arr));
+    } catch(e){}
+  }
+
+  async function checkNewArticlesForNotify(){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const targets = settings.multiCityNotify ? cities : cities.filter(c => cityKey(c) === activeKey);
+    if(!targets.length) return;
+
+    const seen = getSeenNews();
+    let notifyCount = 0;
+
+    for(const city of targets){
+      if(notifyCount >= 3) break;
+      const items = await fetchCategoryItems(city.name, city.admin1, '');
+      if(!items.length) continue;
+
+      for(const item of items.slice(0, 5)){
+        const itemHash = (item.title || '') + '|' + (item.link || '');
+        if(!itemHash || seen.has(itemHash)) continue;
+
+        seen.add(itemHash);
+        notifyCount++;
+
+        try {
+          new Notification(`City News — ${city.name}`, {
+            body: item.title,
+            icon: 'icon-192.png',
+            tag: itemHash
+          });
+        } catch(e){}
+
+        if(notifyCount >= 3) break;
+      }
+    }
+
+    saveSeenNews(seen);
+  }
+
+  function startNotificationPolling(){
+    if(notifyPollTimer) clearInterval(notifyPollTimer);
+    checkNewArticlesForNotify();
+    notifyPollTimer = setInterval(checkNewArticlesForNotify, NOTIFY_POLL_MS);
+  }
+
+  /* Inizializzazione Eventi App */
+  function init(){
+    loadStorage();
+
+    if(cities.length === 0){
+      cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
+      saveStorage();
+    }
+
+    activeKey = cityKey(cities[0]);
+
+    renderTabs();
+    startLiveClock();
+    loadData();
+
+    if('Notification' in window && Notification.permission === 'granted'){
+      startNotificationPolling();
+    }
+
+    // Toggle Pannelli
+    const panels = ['addPanel', 'globalPanel', 'settingsPanel'];
+    function togglePanel(id){
+      panels.forEach(p => {
+        if(p === id) el(p).classList.toggle('open');
+        else el(p).classList.remove('open');
+      });
+    }
+
+    el('btnAddCity').addEventListener('click', () => togglePanel('addPanel'));
+    el('btnGlobalNews').addEventListener('click', () => {
       togglePanel('globalPanel');
-      renderGlobalNews();
+      if(el('globalPanel').classList.contains('open')) renderGlobalNews();
     });
-    el('btnSettings').addEventListener('click', ()=> togglePanel('settingsPanel'));
-    
+    el('btnSettings').addEventListener('click', () => togglePanel('settingsPanel'));
+
+    // Azioni Cerca & Geolocalizzazione
+    el('citySearchBtn').addEventListener('click', () => searchCities(el('citySearchInput').value));
+    el('citySearchInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') searchCities(el('citySearchInput').value); });
+    el('btnGeo').addEventListener('click', locateUser);
+
+    // Filtro Categorie
+    el('categoryBar').querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        el('categoryBar').querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCategory = btn.getAttribute('data-cat') || '';
+        const currentCity = cities.find(c => cityKey(c) === activeKey) || cities[0];
+        renderNews(currentCity);
+      });
+    });
+
+    // Impostazioni & Storage
     el('chkProvince').addEventListener('change', saveSettings);
     el('chkMultiCityNotify').addEventListener('change', saveSettings);
 
-    el('categoryBar').querySelectorAll('.cat-pill').forEach(btn => {
-      btn.addEventListener('click', ()=>{
-        el('categoryBar').querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeCategory = btn.dataset.cat;
-        loadData();
-      });
-    });
-
-    el('weatherCard').addEventListener('click', ()=>{
-      el('weatherDetails').classList.toggle('open');
-    });
-
-    el('btnNotify').addEventListener('click', toggleNotifications);
-
-    el('btnClearStorage').addEventListener('click', ()=>{
-      if(confirm('Cancellare tutto lo storico delle città salvate?')){
+    el('btnClearStorage').addEventListener('click', () => {
+      if(confirm("Sei sicuro di voler cancellare tutte le città e le impostazioni salvate?")){
         localStorage.clear();
         location.reload();
       }
     });
 
-    el('citySearchBtn').addEventListener('click', ()=>{
-      const q = el('citySearchInput').value.trim();
-      if(q) searchCities(q);
+    // Toggle Dettagli Meteo
+    el('weatherCard').addEventListener('click', () => {
+      el('weatherDetails').classList.toggle('open');
     });
 
-    el('citySearchInput').addEventListener('keypress', (e)=>{
-      if(e.key === 'Enter'){
-        const q = el('citySearchInput').value.trim();
-        if(q) searchCities(q);
-      }
-    });
+    // Notifiche
+    el('btnNotify').addEventListener('click', requestNotificationPermission);
   }
 
-  function registerServiceWorker(){
-    if(!('serviceWorker' in navigator)) return;
-    // Nota: i Service Worker richiedono HTTPS (o localhost). Se apri il file direttamente
-    // da disco (file://) la registrazione fallirà silenziosamente: va ospitata online.
-    navigator.serviceWorker.register('sw.js').catch(()=>{ /* non blocchiamo l'app se fallisce */ });
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if(event.data && event.data.type === 'open-link' && event.data.link){
-        window.open(event.data.link, '_blank');
-      }
-    });
-  }
-
-  function init(){
-    loadStorage();
-    if(!cities.length){
-      cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
-      saveStorage();
-    }
-    activeKey = cityKey(cities[0]);
-    setupEvents();
-    startLiveClock();
-    renderTabs();
-    loadData();
-    registerServiceWorker();
-
-    // Se le notifiche erano state attivate in precedenza e il permesso è ancora concesso,
-    // riprendiamo il controllo periodico automaticamente alla riapertura dell'app.
-    if(settings.notificationsEnabled && 'Notification' in window && Notification.permission === 'granted'){
-      startNotifyPolling();
-    } else if(settings.notificationsEnabled){
-      // Il permesso è stato revocato dal browser nel frattempo: disattiviamo per coerenza con l'interfaccia
-      settings.notificationsEnabled = false;
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      updateNotifyButtonLabel();
-    }
-  }
-
-  init();
+  // Avvio al caricamento del DOM
+  document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 </body>
