@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>City News 📰 — Notizie e Meteo</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121511">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="City News">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF8F5;
+    --paper-card:#F2EDE2;
+    --paper-hover:#E8E1D1;
+    --ink:#121511;
+    --ink-soft:#5A5E57;
+    --brand-accent:#D97706;
+    --brand-dark:#B45309;
+    --sky-card:linear-gradient(135deg, #1E293B 0%, #334155 100%);
+    --line:#DDD6C6;
+    --radius:12px;
+    --shadow:0 10px 25px -5px rgba(0,0,0,0.06);
+  }
+  
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden; /* impedisce che un elemento troppo largo "tagli" la pagina fuori schermo */
+    overscroll-behavior-y:contain; /* evita il rimbalzo/pull-to-refresh brusco tipico dei siti in webview Android */
+    width:100%;
+  }
+  a{color:inherit;text-decoration:none;}
+
+  .app{
+    max-width:1100px;margin:0 auto;
+    /* padding adattivo: rispetta le safe-area (notch, barra gesture Android) su ogni dispositivo */
+    padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    width:100%;
+  }
+
+  /* Header Masthead */
+  .masthead{border-bottom:3px double var(--ink);padding-bottom:16px;margin-bottom:16px;}
+  .masthead-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  
+  .brand-badge{
+    display:inline-block;background:var(--brand-accent);color:#FFF;
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+    padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;
+  }
+  .brand h1{
+    font-family:'Cinzel',serif;font-weight:900;font-size:42px;margin:0;
+    letter-spacing:-0.03em;color:var(--ink);line-height:1;
+  }
+  .dateline{
+    margin:8px 0 0;font-family:'JetBrains Mono',monospace;
+    font-size:13px;text-transform:uppercase;color:var(--brand-dark);font-weight:700;
+    overflow-wrap:anywhere;
+  }
+
+  /* Adattamento per schermi molto stretti (telefoni Android economici, ~320-380px) */
+  @media(max-width:380px){
+    .app{padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right));}
+    .brand h1{font-size:32px;}
+    .weather-temp{font-size:42px !important;}
+    .col-head{font-size:17px;}
+  }
+
+  /* Actions Bar */
+  .top-actions{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;width:100%;}
+  @media(min-width:640px){ .top-actions{width:auto;overflow-x:visible;padding-bottom:0;} }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--ink);color:var(--paper);border:none;padding:9px 15px;
+    font-weight:600;font-size:13px;border-radius:var(--radius);cursor:pointer;
+    white-space:nowrap;flex:none;transition:all .2s ease;
+  }
+  .btn:hover{background:var(--brand-dark);color:#FFF;}
+  .btn:active{transform:scale(0.96);}
+  .btn-secondary{background:var(--paper-card);color:var(--ink);border:1px solid var(--line);}
+  .btn-secondary:hover{background:var(--paper-hover);}
+
+  /* Horizontal Tabs */
+  .city-tabs-wrapper{display:flex;align-items:center;gap:8px;margin-top:14px;}
+  .city-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%;}
+  .city-pill-container{display:inline-flex;align-items:center;gap:4px;scroll-snap-align:start;}
+  .city-pill{
+    flex:none;display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--line);background:var(--paper-card);padding:8px 14px;border-radius:30px;
+    font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);transition:all .2s;
+  }
+  .city-pill:hover{background:var(--paper-hover);}
+  .city-pill.active{background:var(--ink);border-color:var(--ink);color:#FFF;}
+  .btn-remove-city{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:14px;
+    padding:2px 6px;border-radius:50%;line-height:1;transition:all .2s;
+  }
+  .btn-remove-city:hover{background:#FCA5A5;color:#DC2626;}
+
+  /* Sliding Pop Panels */
+  .panel{
+    display:none;background:var(--paper-card);border:1px solid var(--line);
+    padding:18px;margin-top:12px;border-radius:var(--radius);box-shadow:var(--shadow);
+  }
+  .panel.open{
+    display:block;
+    animation:slideDown .25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .add-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .add-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);background:var(--paper);font-size:14px;border-radius:var(--radius);outline:none;}
+  .city-results{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .city-item{background:var(--paper);padding:8px 12px;border-radius:6px;border:1px solid var(--line);cursor:pointer;font-size:13px;display:flex;justify-content:space-between;}
+  .city-item:hover{background:var(--paper-hover);}
+
+  /* Settings Switch Options */
+  .setting-option{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:13px;}
+  .setting-option label{cursor:pointer;font-weight:600;}
+  .setting-option input[type="checkbox"]{width:18px;height:18px;cursor:pointer;}
+
+  /* Category Filter Pills */
+  .category-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:12px;}
+  .cat-pill{
+    border:1px solid var(--line);background:var(--paper);padding:4px 10px;border-radius:16px;
+    font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-soft);white-space:nowrap;
+  }
+  .cat-pill.active{background:var(--brand-accent);color:#FFF;border-color:var(--brand-accent);}
+
+  /* Main Grid Layout */
+  .edition{display:grid;grid-template-columns:1fr;gap:24px;margin-top:16px;}
+  @media(min-width:768px){ .edition{grid-template-columns:1.35fr 1fr;} }
+
+  .col-head{font-family:'Cinzel',serif;font-weight:700;font-size:20px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+
+  /* Notification Bar */
+  .notify-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--paper-card);border:1px solid var(--line);padding:10px 14px;
+    border-radius:var(--radius);margin-bottom:14px;font-size:13px;
+  }
+
+  /* News Card Items */
+  .news-card{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);transition:all .15s;}
+  .news-card:hover .news-title a{color:var(--brand-accent);}
+  .news-num{font-family:'JetBrains Mono',monospace;color:var(--brand-accent);font-weight:700;font-size:14px;min-width:24px;flex:none;}
+  .news-card > div{min-width:0;flex:1;} /* CORRETTO: senza min-width:0 un titolo lungo "spinge" fuori la pagina in orizzontale */
+  .news-title{font-family:'Inter',sans-serif;font-size:15px;font-weight:600;line-height:1.4;margin:0 0 4px;overflow-wrap:break-word;word-break:break-word;}
+  .news-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+  .badge-source{background:var(--paper-hover);padding:2px 6px;border-radius:4px;color:var(--ink);font-weight:600;}
+
+  /* Weather Widget */
+  .weather-card{
+    background:var(--sky-card);color:#FFF;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);
+    cursor:pointer;transition:transform .2s, box-shadow .2s;
+  }
+  .weather-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,0.15);}
+  .weather-top{display:flex;justify-content:space-between;align-items:center;}
+  .weather-temp{font-family:'Cinzel',serif;font-size:54px;font-weight:700;line-height:1;}
+  .weather-icon svg{width:56px;height:56px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));}
+  
+  .daily-list{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+  .day-row{display:grid;grid-template-columns:80px 24px 1fr 60px;align-items:center;gap:8px;font-size:13px;}
+  .day-bar-bg{height:6px;background:rgba(255,255,255,0.18);border-radius:4px;overflow:hidden;}
+  .day-bar-fill{height:100%;background:var(--brand-accent);border-radius:4px;}
+
+  /* Extended Weather Popup Panel */
+  .weather-details{
+    display:none;margin-top:12px;background:var(--paper-card);border:1px solid var(--line);
+    padding:16px;border-radius:var(--radius);font-size:13px;
+  }
+  .weather-details.open{display:block;animation:slideDown .2s cubic-bezier(0.16, 1, 0.3, 1);}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+  .detail-box{background:var(--paper);padding:8px 10px;border-radius:8px;border:1px solid var(--line);}
+  .detail-box label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:2px;}
+  .detail-box val{font-weight:700;font-size:13px;color:var(--ink);}
+
+  @keyframes slideDown{
+    from{opacity:0;transform:translateY(-8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="masthead">
+    <div class="masthead-top">
+      <div>
+        <span class="brand-badge">Notizie & Meteo Locale</span>
+        <div class="brand">
+          <h1>City News 📰</h1>
+        </div>
+        <div class="dateline" id="dateline">Aggiornamento orario...</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="btnAddCity">＋ Cerca Città</button>
+        <button class="btn btn-secondary" id="btnGeo">📍 Posizione</button>
+        <button class="btn btn-secondary" id="btnGlobalNews">🌍 Globali</button>
+        <button class="btn btn-secondary" id="btnSettings">⚙️ Impostazioni & Fonti</button>
+      </div>
+    </div>
+
+    <!-- City Selector Tabs -->
+    <div class="city-tabs-wrapper">
+      <nav class="city-tabs" id="cityTabs"></nav>
+    </div>
+
+    <!-- Interactive Top Panels -->
+    <div class="panel" id="addPanel">
+      <div class="add-row">
+        <input type="text" id="citySearchInput" placeholder="Digita una città (es. Torino, Roma, Napoli...)">
+        <button class="btn" id="citySearchBtn">Cerca</button>
+      </div>
+      <div class="city-results" id="searchResults"></div>
+    </div>
+
+    <div class="panel" id="globalPanel">
+      <h3 style="margin-top:0;font-family:'Cinzel',serif;">🌍 Notizie Nazionali & Globali</h3>
+      <div id="globalNewsList">Caricamento ultime notizie...</div>
+    </div>
+
+    <div class="panel" id="settingsPanel">
+      <h3 style="margin-top:0;font-family:'Cinzel',serif;">⚙️ Impostazioni Personalizzate</h3>
+      
+      <div style="background:var(--paper);padding:12px;border-radius:8px;border:1px solid var(--line);margin-bottom:14px;">
+        <div class="setting-option">
+          <label for="chkProvince">Includi notizie di tutta la Provincia / Regione</label>
+          <input type="checkbox" id="chkProvince">
+        </div>
+        <div class="setting-option" style="margin-bottom:0;">
+          <label for="chkMultiCityNotify">Ricevi notifiche ed avvisi anche da tutte le altre città salvate</label>
+          <input type="checkbox" id="chkMultiCityNotify">
+        </div>
+      </div>
+      <p style="font-size:11px;line-height:1.5;color:var(--ink-soft);margin:-8px 0 14px;">
+        ℹ️ Le notifiche funzionano finché l'app resta aperta (anche in background). Se chiudi del tutto il browser/l'app, potrebbero non arrivare fino alla riapertura.
+      </p>
+
+      <p style="font-size:13px;line-height:1.6;color:var(--ink-soft);">
+        • <b>Fonti Notizie Locali:</b> Notizie aggregate da <i>Google News</i> ed <i>ANSA RSS</i>.<br>
+        • <b>Fonti Notizie Globali:</b> Feed ultime notizie nazionali in diretta da <i>ANSA Top News</i>.<br>
+        • <b>Dati Meteo:</b> Forniti dal servizio meteorologico open source <i>Open-Meteo API</i> in base alle coordinate geografiche.<br>
+        • <b>Sincronizzazione Dispositivo:</b> Le impostazioni e le città salvate sono ottimizzate localmente per ogni tuo dispositivo.
+      </p>
+      <hr style="border:0;border-top:1px solid var(--line);margin:14px 0;">
+      <button class="btn btn-secondary" id="btnClearStorage" style="color:#DC2626;border-color:#FCA5A5;">🗑️ Cancella tutto lo storico delle città</button>
+    </div>
+  </header>
+
+  <main class="edition">
+    <!-- Local News Container -->
+    <section>
+      <div class="col-head">
+        <span>Notizie Locali</span>
+        <span style="font-size:13px;color:var(--brand-accent);" id="newsCityLabel">---</span>
+      </div>
+
+      <!-- Filter Categories -->
+      <div class="category-bar" id="categoryBar">
+        <button class="cat-pill active" data-cat="">Tutte</button>
+        <button class="cat-pill" data-cat="cronaca">Cronaca</button>
+        <button class="cat-pill" data-cat="sport">Sport</button>
+        <button class="cat-pill" data-cat="eventi">Eventi</button>
+        <button class="cat-pill" data-cat="politica">Politica</button>
+      </div>
+
+      <div class="notify-bar">
+        <span><b>🔔 Notifiche per notizie ed avvisi</b></span>
+        <button class="btn btn-secondary" id="btnNotify" style="padding:4px 10px;font-size:11px;">Attiva Notifiche</button>
+      </div>
+
+      <div id="localNewsList">Recupero notizie in corso...</div>
+    </section>
+
+    <!-- Weather Forecast Side Column -->
+    <aside>
+      <div class="col-head">
+        <span>Bollettino Meteo</span>
+        <span style="font-size:11px;color:var(--ink-soft);">Tocca per i dettagli</span>
+      </div>
+      
+      <div class="weather-card" id="weatherCard">
+        <div style="font-size:13px;opacity:0.8;">Caricamento bollettino meteo...</div>
+      </div>
+
+      <div class="weather-details" id="weatherDetails">
+        <strong>📊 Condizioni Atmosferiche & Dettagli</strong>
+        <div class="detail-grid" id="detailGrid"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'citynews_app_v11';
+  const SETTINGS_KEY = 'citynews_settings_v11';
+
+  let cities = [];
+  let activeKey = null;
+  let activeCategory = '';
+  let settings = {
+    includeProvince: false,
+    multiCityNotify: false,
+    notificationsEnabled: false
+  };
+
+  const el = (id) => document.getElementById(id);
+
+  // Token per annullare richieste di rete diventate obsolete (cambio rapido di città/sezione)
+  let currentRequestId = 0;
+
+  // Gestione del ciclo di controllo periodico per le notifiche di nuove notizie
+  let notifyPollTimer = null;
+  const NOTIFY_POLL_MS = 6 * 60 * 1000; // ogni 6 minuti
+  const SEEN_NEWS_KEY = 'citynews_seen_v1';
+
+  // Cache in-memoria di breve durata per ridurre le chiamate ai proxy ed evitare i limiti di rate
+  const newsCache = new Map();
+  const CACHE_TTL_MS = 4 * 60 * 1000; // 4 minuti
+
+  const weatherIcons = {
+    sun: `<svg viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
+    cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="#E2E8F0" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>`,
+    rain: `<svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2"><path d="M16 13v8M8 13v8M12 15v8M20 16.58A5 5 0 004 15.25"/></svg>`
+  };
+
+  function getWeatherIcon(code){
+    if(code === 0 || code === 1) return weatherIcons.sun;
+    if(code >= 51) return weatherIcons.rain;
+    return weatherIcons.cloud;
+  }
+
+  function cityKey(c){ return (c.name+'|'+(c.country||'')).toLowerCase(); }
+
+  /* Orologio & Data in Tempo Reale */
+  function startLiveClock(){
+    const updateTime = () => {
+      const city = cities.find(c => cityKey(c) === activeKey);
+      const name = city ? city.name : 'City News';
+      const now = new Date();
+      const days = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+      const months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+      
+      const timeStr = String(now.getHours()).padStart(2,'0') + ':' + 
+                      String(now.getMinutes()).padStart(2,'0') + ':' + 
+                      String(now.getSeconds()).padStart(2,'0');
+
+      el('dateline').textContent = `📍 ${name} — ${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} • ${timeStr}`;
+    };
+    updateTime();
+    setInterval(updateTime, 1000);
+  }
+
+  function loadStorage(){
+    try { cities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ cities = []; }
+    try { 
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      if(s) settings = Object.assign(settings, s);
+    } catch(e){}
+    
+    el('chkProvince').checked = settings.includeProvince;
+    el('chkMultiCityNotify').checked = settings.multiCityNotify;
+    updateNotifyButtonLabel();
+  }
+  
+  function saveStorage(){ 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cities)); 
+  }
+  
+  function saveSettings(){
+    settings.includeProvince = el('chkProvince').checked;
+    settings.multiCityNotify = el('chkMultiCityNotify').checked;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    loadData();
+  }
+
+  /* Formatta una data RSS in stringa leggibile it-IT */
+  function formatPubDate(raw){
+    if(!raw) return '';
+    const d = new Date(raw);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) + ' - ' + d.toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+  }
+
+  /* Google News mette spesso " - NomeTestata" alla fine del titolo: lo separiamo per usarlo come fonte reale */
+  function splitGoogleTitle(rawTitle, fallbackSource){
+    const title = (rawTitle || '').trim();
+    const idx = title.lastIndexOf(' - ');
+    if(idx > 10 && idx > title.length - 60){
+      return { title: title.substring(0, idx).trim(), source: title.substring(idx + 3).trim() || fallbackSource };
+    }
+    return { title, source: fallbackSource };
+  }
+
+  function parseXmlItems(xmlText){
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    if(xmlDoc.querySelector('parsererror')) return [];
+    const nodes = xmlDoc.querySelectorAll('item');
+    if(!nodes.length) return [];
+    return Array.from(nodes).map(item => {
+      const rawTitle = item.querySelector('title') ? item.querySelector('title').textContent : '';
+      const link = item.querySelector('link') ? item.querySelector('link').textContent : '#';
+      const pubDateRaw = item.querySelector('pubDate') ? item.querySelector('pubDate').textContent : '';
+      const src = item.querySelector('source') ? item.querySelector('source').textContent : '';
+      const { title, source } = splitGoogleTitle(rawTitle, src || 'News');
+      return { title, link, source, pubDate: formatPubDate(pubDateRaw) };
+    });
+  }
+
+  /* Fetch RSS con catena di proxy di fallback (CORS / rate-limit), cache breve e timeout */
+  async function fetchRSS(rssUrl){
+    const cached = newsCache.get(rssUrl);
+    if(cached && (Date.now() - cached.time) < CACHE_TTL_MS){
+      return cached.items;
+    }
+
+    // ORDINE IMPORTANTE: rss2json senza chiave a pagamento limita SEMPRE il risultato a 10 notizie
+    // ed è spesso bloccato da limiti condivisi globalmente (causa dei blocchi "infiniti").
+    // Lo mettiamo per ultimo, come ultima spiaggia: i primi 3 proxy leggono l'XML "grezzo"
+    // di Google News (che tipicamente contiene fino a ~50-100 notizie) senza alcun tetto artificiale.
+    const proxies = [
+      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`, type: 'xml' },
+      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`, type: 'xml' },
+      { url: `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`, type: 'xml-wrapped' },
+      { url: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, type: 'rss2json' }
+    ];
+
+    for(const proxy of proxies){
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(proxy.url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if(!res.ok) continue;
+
+        let items = [];
+        if(proxy.type === 'rss2json'){
+          const data = await res.json();
+          if(data.status === 'ok' && data.items && data.items.length > 0){
+            const feedSource = data.feed && data.feed.title ? data.feed.title.replace(/^Google News\s*-\s*/i,'').split(' - ')[0].trim() : 'News';
+            items = data.items.map(item => {
+              const { title, source } = splitGoogleTitle(item.title, feedSource);
+              return { title, link: item.link || '#', source, pubDate: formatPubDate(item.pubDate) };
+            });
+          }
+        } else if(proxy.type === 'xml'){
+          const text = await res.text();
+          items = parseXmlItems(text);
+        } else if(proxy.type === 'xml-wrapped'){
+          const data = await res.json();
+          if(data.contents) items = parseXmlItems(data.contents);
+        }
+
+        if(items.length > 0){
+          newsCache.set(rssUrl, { time: Date.now(), items });
+          return items;
+        }
+      } catch(e){ continue; }
+    }
+    return [];
+  }
+
+  /* Recupero intelligente notizie di categoria senza mai restituire liste vuote se i dati esistono */
+  async function fetchCategoryItems(cityName, admin1, catKey){
+    let queryTerm = cityName;
+    if(settings.includeProvince && admin1 && admin1.toLowerCase() !== cityName.toLowerCase()){
+      queryTerm = `(${cityName} OR ${admin1})`;
+    }
+
+    let searchStr = catKey ? `${queryTerm} ${catKey}` : queryTerm;
+    let items = await fetchRSS(`https://news.google.com/rss/search?q=${encodeURIComponent(searchStr)}&hl=it&gl=IT&ceid=IT:it`);
+
+    // Se la ricerca con categoria specifica non trova nulla, recupera le notizie generali della città
+    // per non lasciare mai vuoto (un solo tentativo di riserva, non due, per non raddoppiare i tempi di attesa)
+    if(!items.length && catKey){
+      items = await fetchRSS(`https://news.google.com/rss/search?q=${encodeURIComponent(cityName)}&hl=it&gl=IT&ceid=IT:it`);
+    }
+
+    return items;
+  }
+
+  async function renderNews(city){
+    const requestId = ++currentRequestId;
+    const container = el('localNewsList');
+    container.innerHTML = `<div style="font-size:13px;color:var(--ink-soft);">Recupero notizie per ${city.name}...</div>`;
+
+    const WATCHDOG_MS = 18000;
+    let watchdogFired = false;
+    const watchdogTimer = setTimeout(() => {
+      watchdogFired = true;
+      if(requestId !== currentRequestId) return;
+      container.innerHTML = `
+        <div style="font-size:13px;color:var(--ink-soft);padding:10px 0;">
+          Il caricamento sta impiegando troppo tempo (i servizi gratuiti di notizie possono essere lenti o sovraccarichi).
+          <div style="margin-top:8px;"><button class="btn btn-secondary" id="btnRetryNews" style="font-size:12px;padding:6px 12px;">🔄 Riprova</button></div>
+        </div>`;
+      const retryBtn = document.getElementById('btnRetryNews');
+      if(retryBtn) retryBtn.addEventListener('click', () => renderNews(city));
+    }, WATCHDOG_MS);
+
+    // Nota: per "Posizione Attuale" usiamo il nome città reale risolto da locateUser() tramite reverse-geocoding,
+    // quindi city.name qui è già una città vera (es. "Torino") e non più il generico "Italia".
+    let cityName = city.name;
+    let admin1 = city.admin1 || '';
+
+    let items = [];
+
+    if(activeCategory){
+      // Sezione singola: recupera fino a 50 notizie dedicate
+      items = await fetchCategoryItems(cityName, admin1, activeCategory);
+      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // richiesta obsoleta, ignora
+      items = items.slice(0, 50);
+    } else {
+      // Sezione "Tutte": recupera in parallelo le 4 sezioni principali + notizie generali
+      const categories = ['', 'cronaca', 'sport', 'eventi', 'politica'];
+      const results = await Promise.all(categories.map(cat => fetchCategoryItems(cityName, admin1, cat)));
+      if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // richiesta obsoleta, ignora
+
+      let combined = [];
+      results.forEach(list => { combined = combined.concat(list); });
+
+      // Filtro anti-duplicati basato sia sul link che sulle prime 30 lettere del titolo
+      const seen = new Set();
+      items = combined.filter(it => {
+        if(!it.title) return false;
+        const keyLink = it.link ? it.link.toLowerCase() : '';
+        const keyTitle = it.title.substring(0, 30).toLowerCase();
+
+        if(seen.has(keyLink) || seen.has(keyTitle)) return false;
+        if(keyLink) seen.add(keyLink);
+        seen.add(keyTitle);
+        return true;
+      });
+
+      // Sezione "Tutte" unisce fino a 200 notizie totali
+      items = items.slice(0, 200);
+    }
+
+    if(requestId !== currentRequestId) { clearTimeout(watchdogTimer); return; } // ultimo controllo prima di scrivere nel DOM
+    clearTimeout(watchdogTimer);
+    if(watchdogFired) return; // il messaggio di timeout è già stato mostrato, non sovrascriviamo con dati arrivati in ritardo
+
+    if(!items.length){
+      // IMPORTANTE: non mostriamo più un feed nazionale generico come "riempitivo":
+      // mostriamo un messaggio onesto e un pulsante per riprovare, così l'utente non vede
+      // notizie non inerenti spacciate per locali.
+      container.innerHTML = `
+        <div style="font-size:13px;color:var(--ink-soft);padding:10px 0;">
+          Nessuna notizia trovata al momento per la categoria "<b>${activeCategory || 'Tutte'}</b>" a ${cityName}.
+          Può capitare se i servizi di notizie sono momentaneamente sovraccarichi.
+          <div style="margin-top:8px;"><button class="btn btn-secondary" id="btnRetryNews" style="font-size:12px;padding:6px 12px;">🔄 Riprova</button></div>
+        </div>`;
+      const retryBtn = document.getElementById('btnRetryNews');
+      if(retryBtn) retryBtn.addEventListener('click', () => renderNews(city));
+      return;
+    }
+
+    container.innerHTML = items.map((it, i) => `
+      <div class="news-card">
+        <span class="news-num">${String(i+1).padStart(2,'0')}</span>
+        <div>
+          <h4 class="news-title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h4>
+          <div class="news-meta">
+            <span class="badge-source">${it.source}</span>
+            <span>${it.pubDate}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function renderGlobalNews(){
+    const container = el('globalNewsList');
+    container.innerHTML = `<div style="font-size:13px;color:var(--ink-soft);">Caricamento ultime notizie...</div>`;
+    const items = await fetchRSS(`https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml`);
+    
+    if(!items.length){
+      container.innerHTML = `<div style="font-size:13px;color:var(--ink-soft);">Notizie globali temporaneamente non disponibili.</div>`;
+      return;
+    }
+
+    container.innerHTML = items.slice(0, 50).map((it, i) => `
+      <div class="news-card">
+        <span class="news-num">🌍</span>
+        <div>
+          <h4 class="news-title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h4>
+          <div class="news-meta">
+            <span class="badge-source">ANSA Top News</span>
+            <span>${it.pubDate}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function renderWeather(city){
+    const card = el('weatherCard');
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,surface_pressure,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max&timezone=auto`);
+      const data = await res.json();
+
+      const cur = data.current;
+      const daily = data.daily;
+      const icon = getWeatherIcon(cur.weather_code);
+
+      let daysHtml = '';
+      const dayNames = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
+      for(let i=0; i<daily.time.length; i++){
+        const dt = new Date(daily.time[i]);
+        const min = Math.round(daily.temperature_2m_min[i]);
+        const max = Math.round(daily.temperature_2m_max[i]);
+        const fillWidth = Math.min(100, Math.max(20, (max - min) * 5));
+
+        daysHtml += `
+          <div class="day-row">
+            <span><b>${i===0?'Oggi':dayNames[dt.getDay()]}</b></span>
+            <span>${getWeatherIcon(daily.weather_code[i])}</span>
+            <div class="day-bar-bg"><div class="day-bar-fill" style="width:${fillWidth}%"></div></div>
+            <span style="text-align:right;"><b>${max}°</b> <small style="opacity:0.6">${min}°</small></span>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="weather-top">
+          <div>
+            <div class="weather-temp">${Math.round(cur.temperature_2m)}°</div>
+            <div style="font-size:12px;opacity:0.85;margin-top:4px;">Percepiti: ${Math.round(cur.apparent_temperature)}°C</div>
+          </div>
+          <div class="weather-icon">${icon}</div>
+        </div>
+        <div class="daily-list">${daysHtml}</div>
+      `;
+
+      const formatTime = (isoStr) => new Date(isoStr).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+
+      el('detailGrid').innerHTML = `
+        <div class="detail-box"><label>Umidità</label><val>${cur.relative_humidity_2m}%</val></div>
+        <div class="detail-box"><label>Vento</label><val>${Math.round(cur.wind_speed_10m)} km/h</val></div>
+        <div class="detail-box"><label>Prob. Pioggia</label><val>${daily.precipitation_probability_max[0]}%</val></div>
+        <div class="detail-box"><label>Indice UV Max</label><val>${daily.uv_index_max[0]}</val></div>
+        <div class="detail-box"><label>Pressione</label><val>${Math.round(cur.surface_pressure)} hPa</val></div>
+        <div class="detail-box"><label>Nuvolosità</label><val>${cur.cloud_cover}%</val></div>
+        <div class="detail-box"><label>Alba</label><val>${formatTime(daily.sunrise[0])}</val></div>
+        <div class="detail-box"><label>Tramonto</label><val>${formatTime(daily.sunset[0])}</val></div>
+      `;
+    } catch(e) {
+      card.innerHTML = `<div>Meteo non disponibile.</div>`;
+    }
+  }
+
+  function removeCity(key, event){
+    event.stopPropagation();
+    cities = cities.filter(c => cityKey(c) !== key);
+    saveStorage();
+    
+    if(cities.length === 0){
+      cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
+      saveStorage();
+    }
+    
+    if(activeKey === key){
+      activeKey = cityKey(cities[0]);
+    }
+    
+    renderTabs();
+    loadData();
+  }
+
+  function renderTabs(){
+    el('cityTabs').innerHTML = cities.map(c => `
+      <div class="city-pill-container">
+        <button class="city-pill ${cityKey(c)===activeKey?'active':''}" data-key="${cityKey(c)}">
+          🏛️ ${c.name}
+        </button>
+        ${cities.length > 1 ? `<button class="btn-remove-city" data-remove="${cityKey(c)}" title="Rimuovi città">✕</button>` : ''}
+      </div>
+    `).join('');
+
+    el('cityTabs').querySelectorAll('.city-pill').forEach(b => {
+      b.addEventListener('click', ()=>{
+        activeKey = b.dataset.key;
+        renderTabs();
+        loadData();
+      });
+    });
+
+    el('cityTabs').querySelectorAll('.btn-remove-city').forEach(b => {
+      b.addEventListener('click', (e)=> removeCity(b.dataset.remove, e));
+    });
+  }
+
+  function loadData(){
+    const city = cities.find(c => cityKey(c) === activeKey);
+    if(!city) return;
+    const provStr = (settings.includeProvince && city.admin1) ? ` - Prov/Reg: ${city.admin1}` : '';
+    el('newsCityLabel').textContent = `${city.name} (${city.country || 'IT'})${provStr} 🇮🇹`;
+    renderNews(city);
+    renderWeather(city);
+    el('weatherDetails').classList.remove('open');
+  }
+
+  /* Geocoding e Correttore Duplicati */
+  async function searchCities(query){
+    const container = el('searchResults');
+    container.innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">Ricerca in corso...</div>`;
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=it`);
+      const data = await res.json();
+      
+      if(!data.results || !data.results.length){
+        container.innerHTML = `<div style="font-size:12px;color:var(--ink-soft);">Nessuna città trovata. Prova a specificare la nazione.</div>`;
+        return;
+      }
+
+      container.innerHTML = data.results.map(item => {
+        const adminStr = item.admin1 ? `, ${item.admin1}` : '';
+        const countryStr = item.country ? ` (${item.country})` : '';
+        return `
+          <div class="city-item" data-json='${JSON.stringify({name: item.name, country: item.country||'', lat: item.latitude, lon: item.longitude, admin1: item.admin1||''})}'>
+            <span><b>${item.name}</b>${adminStr}${countryStr}</span>
+            <span style="color:var(--brand-accent);">Seleziona ＋</span>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.city-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const newCity = JSON.parse(btn.dataset.json);
+          if(!cities.some(c => cityKey(c) === cityKey(newCity))){
+            cities.push(newCity);
+            saveStorage();
+          }
+          activeKey = cityKey(newCity);
+          el('addPanel').classList.remove('open');
+          container.innerHTML = '';
+          el('citySearchInput').value = '';
+          renderTabs();
+          loadData();
+        });
+      });
+    } catch(e){
+      container.innerHTML = `<div style="font-size:12px;color:red;">Errore durante la ricerca.</div>`;
+    }
+  }
+
+  /* Rilevamento Posizione GPS con vero reverse-geocoding (prima restava sempre su "Italia" generico) */
+  function locateUser(){
+    if(!navigator.geolocation){
+      alert('Geolocalizzazione non supportata dal tuo browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos)=>{
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      // BUG CORRETTO: l'endpoint open-meteo /v1/search NON supporta il reverse-geocoding
+      // (accetta solo un "name" testuale), quindi prima la città restava sempre "Italia" -> notizie
+      // nazionali generiche invece che locali. Usiamo Nominatim (OpenStreetMap) per il reverse geocoding.
+      let cityName = 'Posizione Attuale';
+      let admin1 = '';
+      let country = 'IT';
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&accept-language=it`);
+        if(res.ok){
+          const data = await res.json();
+          const addr = data.address || {};
+          cityName = addr.city || addr.town || addr.village || addr.municipality || addr.county || cityName;
+          admin1 = addr.state || addr.region || '';
+          country = (addr.country_code || 'it').toUpperCase();
+        }
+      } catch(e){
+        // Se il reverse-geocoding fallisce, avvisiamo l'utente invece di mostrare notizie generiche mascherate da locali
+        alert('Impossibile determinare il nome della tua città. Riprova o cercala manualmente.');
+        return;
+      }
+
+      const newCity = { name: cityName, country: country, lat: lat, lon: lon, admin1: admin1 };
+      if(!cities.some(c => cityKey(c) === cityKey(newCity))){
+        cities.unshift(newCity);
+        saveStorage();
+      }
+      activeKey = cityKey(newCity);
+      renderTabs();
+      loadData();
+    }, ()=>{
+      alert('Impossibile accedere alla tua posizione GPS.');
+    });
+  }
+
+  /* ============================================================
+     SISTEMA DI NOTIFICHE REALI PER NUOVE NOTIZIE
+     ============================================================
+     Nota tecnica importante: su Android/Chrome il costruttore diretto
+     `new Notification()` spesso NON funziona (è bloccato dal browser mobile);
+     serve passare dal Service Worker (`registration.showNotification`), che
+     è quello che usiamo qui sotto. Per questo motivo il Service Worker
+     (sw.js) non è solo "offline caching" ma un requisito per le notifiche
+     su telefono.
+     Limite onesto: funziona mentre l'app è aperta (anche in tab in
+     background); se il browser/app viene chiuso del tutto, il controllo si
+     ferma finché non lo riapri (non c'è un server push dietro, essendo
+     un'app senza backend). */
+
+  function loadSeenStore(){
+    try { return JSON.parse(localStorage.getItem(SEEN_NEWS_KEY)) || {}; } catch(e){ return {}; }
+  }
+  function saveSeenStore(store){
+    localStorage.setItem(SEEN_NEWS_KEY, JSON.stringify(store));
+  }
+
+  async function showRealNotification(title, body, link, tag){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      if('serviceWorker' in navigator){
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification(title, {
+          body,
+          icon: 'icon-192.png',
+          badge: 'icon-192.png',
+          tag: tag || link,
+          data: { link }
+        });
+      } else {
+        // Fallback per browser desktop senza service worker attivo
+        const n = new Notification(title, { body, icon: 'icon-192.png', data: { link } });
+        n.onclick = () => { window.open(link, '_blank'); n.close(); };
+      }
+    } catch(e){ /* silenzioso: non blocchiamo l'app se le notifiche falliscono */ }
+  }
+
+  /* Controlla le notizie nuove per una singola città e notifica solo quelle mai viste prima */
+  async function checkCityForNewNews(city, seenStore){
+    const cKey = cityKey(city);
+    const cityName = city.name;
+    const items = await fetchCategoryItems(cityName, city.admin1 || '', '');
+    if(!items.length) return;
+
+    const isFirstRun = !seenStore[cKey];
+    const seenLinks = new Set(isFirstRun ? [] : seenStore[cKey].links);
+
+    const freshItems = items.filter(it => it.link && !seenLinks.has(it.link));
+
+    // Aggiorna lo storico "visto" per questa città (limitato per non far crescere lo storage all'infinito)
+    const updatedLinks = Array.from(new Set([...(seenStore[cKey] ? seenStore[cKey].links : []), ...items.map(i=>i.link).filter(Boolean)])).slice(-400);
+    seenStore[cKey] = { time: Date.now(), links: updatedLinks };
+
+    if(isFirstRun){
+      // Primo controllo per questa città: creiamo solo la base di partenza, senza notificare
+      // tutte le notizie già esistenti (altrimenti la prima volta arriverebbe una raffica di notifiche).
+      return;
+    }
+
+    if(!freshItems.length) return;
+
+    if(freshItems.length === 1){
+      const it = freshItems[0];
+      await showRealNotification(`📰 ${cityName}`, it.title, it.link, it.link);
+    } else {
+      // Più notizie nuove insieme: una notifica riassuntiva invece di una raffica
+      await showRealNotification(
+        `📰 ${cityName} — ${freshItems.length} nuove notizie`,
+        freshItems.slice(0, 3).map(i => '• ' + i.title).join('\n'),
+        freshItems[0].link,
+        `${cKey}-batch`
+      );
+    }
+  }
+
+  async function pollForNewNews(){
+    if(!settings.notificationsEnabled) return;
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const targets = settings.multiCityNotify ? cities.slice() : cities.filter(c => cityKey(c) === activeKey);
+    if(!targets.length) return;
+
+    const seenStore = loadSeenStore();
+    for(const city of targets){
+      try { await checkCityForNewNews(city, seenStore); } catch(e){ /* continua con le altre città */ }
+    }
+    saveSeenStore(seenStore);
+  }
+
+  function startNotifyPolling(){
+    stopNotifyPolling();
+    // Primo giro subito (stabilisce la base senza spam), poi un controllo periodico
+    pollForNewNews();
+    notifyPollTimer = setInterval(pollForNewNews, NOTIFY_POLL_MS);
+  }
+  function stopNotifyPolling(){
+    if(notifyPollTimer){ clearInterval(notifyPollTimer); notifyPollTimer = null; }
+  }
+
+  function updateNotifyButtonLabel(){
+    const btn = el('btnNotify');
+    if(!btn) return;
+    btn.textContent = settings.notificationsEnabled ? '🔕 Disattiva Notifiche' : '🔔 Attiva Notifiche';
+  }
+
+  async function toggleNotifications(){
+    if(settings.notificationsEnabled){
+      settings.notificationsEnabled = false;
+      stopNotifyPolling();
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      updateNotifyButtonLabel();
+      return;
+    }
+
+    if(!('Notification' in window)){
+      alert('Notifiche non supportate da questo browser.');
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      if(perm !== 'granted'){
+        alert('⚠️ Permesso negato dal browser.');
+        return;
+      }
+    } catch(e){
+      alert('Impossibile richiedere le notifiche.');
+      return;
+    }
+
+    settings.notificationsEnabled = true;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    updateNotifyButtonLabel();
+    const targetMsg = settings.multiCityNotify ? 'tutte le città in lista' : 'la città attiva';
+    alert(`🔔 Notifiche attivate per ${targetMsg}. Riceverai un avviso quando esce una notizia nuova (controllo ogni ~6 minuti, app aperta).`);
+    startNotifyPolling();
+  }
+
+  function setupEvents(){
+    const togglePanel = (p) => {
+      ['addPanel','globalPanel','settingsPanel'].forEach(id => {
+        el(id).classList.toggle('open', id === p && !el(id).classList.contains('open'));
+      });
+    };
+
+    el('btnAddCity').addEventListener('click', ()=> togglePanel('addPanel'));
+    el('btnGeo').addEventListener('click', locateUser);
+    el('btnGlobalNews').addEventListener('click', ()=> {
+      togglePanel('globalPanel');
+      renderGlobalNews();
+    });
+    el('btnSettings').addEventListener('click', ()=> togglePanel('settingsPanel'));
+    
+    el('chkProvince').addEventListener('change', saveSettings);
+    el('chkMultiCityNotify').addEventListener('change', saveSettings);
+
+    el('categoryBar').querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', ()=>{
+        el('categoryBar').querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCategory = btn.dataset.cat;
+        loadData();
+      });
+    });
+
+    el('weatherCard').addEventListener('click', ()=>{
+      el('weatherDetails').classList.toggle('open');
+    });
+
+    el('btnNotify').addEventListener('click', toggleNotifications);
+
+    el('btnClearStorage').addEventListener('click', ()=>{
+      if(confirm('Cancellare tutto lo storico delle città salvate?')){
+        localStorage.clear();
+        location.reload();
+      }
+    });
+
+    el('citySearchBtn').addEventListener('click', ()=>{
+      const q = el('citySearchInput').value.trim();
+      if(q) searchCities(q);
+    });
+
+    el('citySearchInput').addEventListener('keypress', (e)=>{
+      if(e.key === 'Enter'){
+        const q = el('citySearchInput').value.trim();
+        if(q) searchCities(q);
+      }
+    });
+  }
+
+  function registerServiceWorker(){
+    if(!('serviceWorker' in navigator)) return;
+    // Nota: i Service Worker richiedono HTTPS (o localhost). Se apri il file direttamente
+    // da disco (file://) la registrazione fallirà silenziosamente: va ospitata online.
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* non blocchiamo l'app se fallisce */ });
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if(event.data && event.data.type === 'open-link' && event.data.link){
+        window.open(event.data.link, '_blank');
+      }
+    });
+  }
+
+  function init(){
+    loadStorage();
+    if(!cities.length){
+      cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
+      saveStorage();
+    }
+    activeKey = cityKey(cities[0]);
+    setupEvents();
+    startLiveClock();
+    renderTabs();
+    loadData();
+    registerServiceWorker();
+
+    // Se le notifiche erano state attivate in precedenza e il permesso è ancora concesso,
+    // riprendiamo il controllo periodico automaticamente alla riapertura dell'app.
+    if(settings.notificationsEnabled && 'Notification' in window && Notification.permission === 'granted'){
+      startNotifyPolling();
+    } else if(settings.notificationsEnabled){
+      // Il permesso è stato revocato dal browser nel frattempo: disattiviamo per coerenza con l'interfaccia
+      settings.notificationsEnabled = false;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      updateNotifyButtonLabel();
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
