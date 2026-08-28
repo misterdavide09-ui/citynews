@@ -27,8 +27,8 @@
     --sky-card:linear-gradient(135deg, #1E293B 0%, #334155 100%);
     --line:#121511;
     --line-soft:#DDD6C6;
-    --radius:8px;
-    --shadow:0 4px 15px -2px rgba(0,0,0,0.05);
+    --radius:12px;
+    --shadow:0 4px 20px -2px rgba(0,0,0,0.06);
   }
   
   *{
@@ -57,6 +57,7 @@
     margin:0 auto;
     padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
     width:100%;
+    perspective: 1200px; /* Abilita la prospettiva 3D */
   }
 
   /* Header Masthead Giornalistico */
@@ -64,6 +65,8 @@
     border-bottom:4px solid var(--ink);
     padding-bottom:16px;
     margin-bottom:20px;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
   }
   .masthead-top{
     display:flex;
@@ -141,10 +144,10 @@
     cursor:pointer;
     white-space:nowrap;
     flex:none;
-    transition:all .2s ease;
+    transition:all .25s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .btn:hover{background:var(--brand-dark);color:#FFF;}
-  .btn:active{transform:scale(0.96);}
+  .btn:hover{background:var(--brand-dark);color:#FFF;transform:translateY(-2px) scale(1.02);box-shadow: 0 4px 12px rgba(0,0,0,0.12);}
+  .btn:active{transform:scale(0.95);}
   .btn-secondary{background:var(--paper-card);color:var(--ink);border:1px solid var(--line-soft);}
   .btn-secondary:hover{background:var(--paper-hover);}
 
@@ -155,15 +158,15 @@
   .city-pill{
     flex:none;display:inline-flex;align-items:center;gap:6px;
     border:1px solid var(--line-soft);background:var(--paper-card);padding:8px 14px;border-radius:30px;
-    font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);transition:all .2s;
+    font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);transition:all .25s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .city-pill:hover{background:var(--paper-hover);}
-  .city-pill.active{background:var(--ink);border-color:var(--ink);color:#FFF;}
+  .city-pill:hover{background:var(--paper-hover);transform:scale(1.04);}
+  .city-pill.active{background:var(--ink);border-color:var(--ink);color:#FFF;transform:scale(1.05);box-shadow:0 4px 10px rgba(0,0,0,0.15);}
   .btn-remove-city{
     background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:14px;
     padding:2px 6px;border-radius:50%;line-height:1;transition:all .2s;
   }
-  .btn-remove-city:hover{background:#FCA5A5;color:#DC2626;}
+  .btn-remove-city:hover{background:#FCA5A5;color:#DC2626;transform:rotate(90deg);}
 
   /* Panels */
   .panel{
@@ -172,13 +175,14 @@
   }
   .panel.open{
     display:block;
-    animation:slideDown .25s cubic-bezier(0.16, 1, 0.3, 1);
+    animation:slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .add-row{display:flex;gap:8px;flex-wrap:wrap;}
-  .add-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line-soft);background:var(--paper);font-size:14px;border-radius:var(--radius);outline:none;}
+  .add-row input{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line-soft);background:var(--paper);font-size:14px;border-radius:var(--radius);outline:none;transition:border-color 0.2s, box-shadow 0.2s;}
+  .add-row input:focus{border-color:var(--brand-accent);box-shadow:0 0 0 3px rgba(217, 119, 6, 0.15);}
   .city-results{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
-  .city-item{background:var(--paper);padding:8px 12px;border-radius:6px;border:1px solid var(--line-soft);cursor:pointer;font-size:13px;display:flex;justify-content:space-between;}
-  .city-item:hover{background:var(--paper-hover);}
+  .city-item{background:var(--paper);padding:8px 12px;border-radius:6px;border:1px solid var(--line-soft);cursor:pointer;font-size:13px;display:flex;justify-content:space-between;transition:all 0.2s ease;}
+  .city-item:hover{background:var(--paper-hover);transform:translateX(4px);}
 
   /* Settings Switch Options */
   .setting-option{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:13px;}
@@ -190,8 +194,10 @@
   .cat-pill{
     border:1px solid var(--line-soft);background:var(--paper);padding:6px 12px;border-radius:16px;
     font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-soft);white-space:nowrap;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .cat-pill.active{background:var(--brand-accent);color:#FFF;border-color:var(--brand-accent);}
+  .cat-pill:hover{transform:translateY(-1px);}
+  .cat-pill.active{background:var(--brand-accent);color:#FFF;border-color:var(--brand-accent);box-shadow:0 3px 8px rgba(217, 119, 6, 0.25);}
 
   /* Main Edition Container */
   .edition{display:flex;flex-direction:column;gap:20px;margin-top:10px;}
@@ -213,19 +219,33 @@
     display:flex;align-items:center;justify-content:space-between;
     background:var(--paper-card);border:1px solid var(--line-soft);padding:10px 14px;
     border-radius:var(--radius);margin-bottom:14px;font-size:13px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
+  .notify-bar:hover{transform:translateY(-1px);box-shadow:var(--shadow);}
 
-  /* News Card Items */
+  /* News Card Items & Animazioni 3D Tilt e Sfoglio */
   .news-card{
     display:flex;
     gap:14px;
-    padding:14px 0;
-    border-bottom:1px solid var(--line-soft);
-    transition:all .15s;
-    background: transparent;
+    padding:14px;
+    margin-bottom:10px;
+    background: var(--paper-card);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+    opacity: 0;
+    transform: translateY(18px);
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-style: preserve-3d;
+    will-change: transform;
+    cursor: pointer;
+  }
+  .news-card:hover {
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    border-color: var(--brand-accent);
   }
   .news-card:hover .news-title a{color:var(--brand-accent);}
-  .news-num{font-family:'JetBrains Mono',monospace;color:var(--brand-accent);font-weight:700;font-size:14px;min-width:24px;flex:none;}
+  .news-num{font-family:'JetBrains Mono',monospace;color:var(--brand-accent);font-weight:700;font-size:14px;min-width:24px;flex:none;transform: translateZ(10px);}
   .news-card > div{min-width:0;flex:1;}
   .news-title{
     font-family:'Merriweather',serif;
@@ -235,47 +255,113 @@
     margin:0 0 6px;
     overflow-wrap:break-word;
     word-break:break-word;
+    transform: translateZ(15px);
   }
-  .news-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+  .news-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;flex-wrap:wrap;transform: translateZ(5px);}
   .badge-source{background:var(--paper-hover);padding:2px 6px;border-radius:4px;color:var(--ink);font-weight:600;border:1px solid var(--line-soft);}
 
   /* Weather Widget In Alto */
   .weather-section{margin-bottom:10px;}
   .weather-card{
-    background:var(--sky-card);color:#FFF;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);
-    cursor:pointer;transition:transform .2s, box-shadow .2s;
+    background:var(--sky-card);color:#FFF;padding:22px;border-radius:var(--radius);box-shadow:var(--shadow);
+    cursor:pointer;transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    transform-style: preserve-3d;
   }
-  .weather-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,0.15);}
+  .weather-card:hover{transform:translateY(-3px) rotateX(2deg);box-shadow:0 14px 35px rgba(0,0,0,0.22);}
   .weather-top{display:flex;justify-content:space-between;align-items:center;}
-  .weather-temp{font-family:'Cinzel',serif;font-size:50px;font-weight:700;line-height:1;}
-  .weather-icon svg{width:52px;height:52px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));}
-  
-  .daily-list{margin-top:16px;display:grid;grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));gap:10px;}
-  .day-row{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;background:rgba(255,255,255,0.08);padding:8px;border-radius:6px;}
-  .day-bar-bg{width:100%;height:4px;background:rgba(255,255,255,0.18);border-radius:4px;overflow:hidden;margin-top:2px;}
-  .day-bar-fill{height:100%;background:var(--brand-accent);border-radius:4px;}
+  .weather-temp{font-family:'Cinzel',serif;font-size:50px;font-weight:700;line-height:1;transform:translateZ(10px);}
+  .weather-icon svg{width:56px;height:56px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));animation: floatIcon 3.5s ease-in-out infinite;}
 
-  /* Extended Weather Popup Panel */
+  /* Griglia Meteo 3x2 (6 giorni) */
+  .daily-list{
+    margin-top:18px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:10px;
+  }
+  .day-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    font-size:12px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter: blur(4px);
+    padding:10px 8px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1);
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .day-row:hover {
+    transform: scale(1.05) translateZ(10px);
+    background: rgba(255,255,255,0.16);
+  }
+  .day-bar-bg{width:100%;height:4px;background:rgba(255,255,255,0.18);border-radius:4px;overflow:hidden;margin-top:4px;}
+  .day-bar-fill{height:100%;background:var(--brand-accent);border-radius:4px;transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);}
+
+  /* Extended Weather Popup Panel con 8 Dati Animati */
   .weather-details{
     display:none;margin-top:12px;background:var(--paper-card);border:1px solid var(--line-soft);
-    padding:16px;border-radius:var(--radius);font-size:13px;
+    padding:18px;border-radius:var(--radius);font-size:13px;box-shadow: var(--shadow);
   }
-  .weather-details.open{display:block;animation:slideDown .2s cubic-bezier(0.16, 1, 0.3, 1);}
-  .detail-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:8px;margin-top:10px;}
-  .detail-box{background:var(--paper);padding:8px 10px;border-radius:8px;border:1px solid var(--line-soft);}
-  .detail-box label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:2px;}
-  .detail-box val{font-weight:700;font-size:13px;color:var(--ink);}
+  .weather-details.open{display:block;animation:slideDown .35s cubic-bezier(0.16, 1, 0.3, 1);}
+  .detail-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-top:12px;}
+  @media(max-width: 640px){
+    .detail-grid{grid-template-columns:repeat(2, 1fr);}
+  }
+  .detail-box{
+    background:var(--paper);padding:10px 12px;border-radius:10px;border:1px solid var(--line-soft);
+    opacity:0; transform: scale(0.85);
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transition: transform 0.2s, background-color 0.2s;
+  }
+  .detail-box:hover{transform:scale(1.03);background:var(--paper-hover);}
+  .detail-box label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:3px;font-weight:600;}
+  .detail-box val{font-weight:700;font-size:14px;color:var(--ink);}
 
+  /* Modal Guida Notifiche & Sfoglio Articolo */
+  .modal-overlay{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.65);backdrop-filter:blur(5px);
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;padding:16px;
+    opacity:0; pointer-events:none; transition: opacity 0.35s ease;
+    perspective: 1000px;
+  }
+  .modal-overlay.open{opacity:1; pointer-events:auto;}
+  .modal-card{
+    background:var(--paper-card);border:2px solid var(--ink);border-radius:16px;
+    max-width:460px;width:100%;padding:22px;box-shadow:0 25px 50px rgba(0,0,0,0.3);
+    transform: rotateY(-30deg) scale(0.85); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: left center;
+  }
+  .modal-overlay.open .modal-card{transform: rotateY(0deg) scale(1);}
+  .modal-steps{margin:16px 0;padding-left:20px;font-size:13px;line-height:1.6;color:var(--ink);}
+  .modal-steps li{margin-bottom:8px;}
+
+  /* Keyframe Animations */
   @keyframes slideDown{
-    from{opacity:0;transform:translateY(-8px);}
-    to{opacity:1;transform:translateY(0);}
+    from{opacity:0;transform:translateY(-16px) scale(0.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  @keyframes fadeInUp{
+    from{opacity:0;transform:translateY(24px) rotateX(-5deg);}
+    to{opacity:1;transform:translateY(0) rotateX(0deg);}
+  }
+  @keyframes popIn{
+    from{opacity:0;transform:scale(0.8);}
+    to{opacity:1;transform:scale(1);}
+  }
+  @keyframes floatIcon{
+    0%, 100%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-8px) rotate(3deg);}
   }
 </style>
 </head>
 <body>
 
 <div class="app">
-  <header class="masthead">
+  <header class="masthead" id="masthead">
     <div class="masthead-top">
       <div>
         <span class="brand-badge">Edizione Giornalistica</span>
@@ -314,15 +400,19 @@
     <div class="panel" id="settingsPanel">
       <h3 style="margin-top:0;font-family:'Merriweather',serif;">⚙️ Impostazioni Personalizzate</h3>
       
-      <div style="background:var(--paper);padding:12px;border-radius:8px;border:1px solid var(--line-soft);margin-bottom:14px;">
-        <!-- Rimosso l'opzione chkProvince per eliminare i bug di caricamento -->
-        <div class="setting-option" style="margin-bottom:0;">
+      <div style="background:var(--paper);padding:14px;border-radius:10px;border:1px solid var(--line-soft);margin-bottom:14px;">
+        <div class="setting-option">
           <label for="chkMultiCityNotify">Ricevi notifiche ed avvisi anche da tutte le altre città salvate</label>
           <input type="checkbox" id="chkMultiCityNotify">
         </div>
+        <hr style="border:0;border-top:1px solid var(--line-soft);margin:10px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:600;">Permessi Notifiche di Sistema</span>
+          <button class="btn btn-secondary" id="btnOpenNotifyGuide" style="padding:4px 10px;font-size:11px;">📖 Guida Abilitazione</button>
+        </div>
       </div>
       <p style="font-size:11px;line-height:1.5;color:var(--ink-soft);margin:-8px 0 14px;">
-        ℹ️ Le notifiche funzionano finché l'app resta aperta (anche in background).
+        ℹ️ Se le notifiche non si abilitano col tasto principale, consulta la guida per attivarle dalle impostazioni del telefono.
       </p>
 
       <p style="font-size:13px;line-height:1.6;color:var(--ink-soft);">
@@ -341,7 +431,7 @@
     <section class="weather-section">
       <div class="col-head">
         <span>Bollettino Meteo</span>
-        <span style="font-size:12px;color:var(--ink-soft);font-family:'Inter',sans-serif;">Tocca per i dettagli</span>
+        <span style="font-size:12px;color:var(--ink-soft);font-family:'Inter',sans-serif;">Tocca per 8 dettagli animati</span>
       </div>
       
       <div class="weather-card" id="weatherCard">
@@ -381,10 +471,30 @@
   </main>
 </div>
 
+<!-- Modal Guida Abilitazione Notifiche (Primo avvio & Manuale) -->
+<div class="modal-overlay" id="notifyGuideModal">
+  <div class="modal-card">
+    <h3 style="margin-top:0;font-family:'Merriweather',serif;">🔔 Come Abilitare le Notifiche</h3>
+    <p style="font-size:13px;color:var(--ink-soft);line-height:1.5;">
+      Se cliccando il pulsante le notifiche non si attivano, il tuo telefono o browser le sta bloccando nelle impostazioni di sistema.
+    </p>
+    <ol class="modal-steps">
+      <li>Apri le <b>Impostazioni</b> del tuo smartphone.</li>
+      <li>Vai alla sezione <b>App</b> (o <i>Applicazioni e Notifiche</i>).</li>
+      <li>Seleziona il tuo Browser (es. <i>Chrome, Safari</i>) o l'app <b>City News</b>.</li>
+      <li>Tocca <b>Notifiche</b> ed attiva la spunta <b>Consenti notifiche</b>.</li>
+    </ol>
+    <div style="text-align:right;margin-top:18px;">
+      <button class="btn" id="btnCloseNotifyGuide">Ho capito, chiudi</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   const STORAGE_KEY = 'citynews_app_v11';
   const SETTINGS_KEY = 'citynews_settings_v11';
+  const GUIDES_KEY = 'citynews_guide_seen_v1';
 
   let cities = [];
   let activeKey = null;
@@ -397,10 +507,6 @@
   const el = (id) => document.getElementById(id);
 
   let currentRequestId = 0;
-  let notifyPollTimer = null;
-  const NOTIFY_POLL_MS = 6 * 60 * 1000;
-  const SEEN_NEWS_KEY = 'citynews_seen_v1';
-
   const newsCache = new Map();
   const CACHE_TTL_MS = 4 * 60 * 1000;
 
@@ -436,6 +542,40 @@
     setInterval(updateTime, 1000);
   }
 
+  /* Animazione Parallasse e Inclinazione 3D allo Scroll per l'Header */
+  function init3dScrollHeader(){
+    const masthead = el('masthead');
+    window.addEventListener('scroll', () => {
+      const scrolled = window.scrollY;
+      if (scrolled < 200) {
+        const scale = 1 - (scrolled / 2500);
+        const rotateX = Math.min(scrolled * 0.04, 10);
+        masthead.style.transform = `scale(${scale}) rotateX(${rotateX}deg)`;
+      }
+    });
+  }
+
+  /* Attiva l'effetto TILT 3D dinamico sulle News Card al movimento */
+  function bind3dTiltEvents(){
+    const cards = document.querySelectorAll('.news-card, .weather-card');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = -((y - centerY) / centerY) * 8;
+        const rotateY = ((x - centerX) / centerX) * 8;
+        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(0.99, 0.99, 0.99)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      });
+    });
+  }
+
   function loadStorage(){
     try { cities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ cities = []; }
     try { 
@@ -445,6 +585,11 @@
     
     el('chkMultiCityNotify').checked = settings.multiCityNotify;
     updateNotifyButtonLabel();
+
+    if(!localStorage.getItem(GUIDES_KEY)){
+      showNotifyGuide();
+      localStorage.setItem(GUIDES_KEY, 'true');
+    }
   }
   
   function saveStorage(){ 
@@ -612,8 +757,9 @@
       return;
     }
 
+    // Render con animazioni a cascata
     container.innerHTML = items.map((it, i) => `
-      <div class="news-card">
+      <div class="news-card" style="animation-delay: ${Math.min(i * 0.04, 0.6)}s;">
         <span class="news-num">${String(i+1).padStart(2,'0')}</span>
         <div>
           <h4 class="news-title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h4>
@@ -624,6 +770,8 @@
         </div>
       </div>
     `).join('');
+
+    bind3dTiltEvents();
   }
 
   async function renderGlobalNews(){
@@ -637,7 +785,7 @@
     }
 
     container.innerHTML = items.slice(0, 50).map((it, i) => `
-      <div class="news-card">
+      <div class="news-card" style="animation-delay: ${Math.min(i * 0.04, 0.6)}s;">
         <span class="news-num">🌍</span>
         <div>
           <h4 class="news-title"><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h4>
@@ -648,8 +796,11 @@
         </div>
       </div>
     `).join('');
+
+    bind3dTiltEvents();
   }
 
+  /* Render Meteo 6 Giorni (3 e 3) + 8 Dati Animati */
   async function renderWeather(city){
     const card = el('weatherCard');
     try {
@@ -663,7 +814,7 @@
       let daysHtml = '';
       const dayNames = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 
-      for(let i=0; i<Math.min( daily.time.length, 5); i++){
+      for(let i=0; i<Math.min(daily.time.length, 6); i++){
         const dt = new Date(daily.time[i]);
         const min = Math.round(daily.temperature_2m_min[i]);
         const max = Math.round(daily.temperature_2m_max[i]);
@@ -692,16 +843,26 @@
 
       const formatTime = (isoStr) => new Date(isoStr).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
 
-      el('detailGrid').innerHTML = `
-        <div class="detail-box"><label>Umidità</label><val>${cur.relative_humidity_2m}%</val></div>
-        <div class="detail-box"><label>Vento</label><val>${Math.round(cur.wind_speed_10m)} km/h</val></div>
-        <div class="detail-box"><label>Prob. Pioggia</label><val>${daily.precipitation_probability_max[0]}%</val></div>
-        <div class="detail-box"><label>Indice UV Max</label><val>${daily.uv_index_max[0]}</val></div>
-        <div class="detail-box"><label>Pressione</label><val>${Math.round(cur.surface_pressure)} hPa</val></div>
-        <div class="detail-box"><label>Nuvolosità</label><val>${cur.cloud_cover}%</val></div>
-        <div class="detail-box"><label>Alba</label><val>${formatTime(daily.sunrise[0])}</val></div>
-        <div class="detail-box"><label>Tramonto</label><val>${formatTime(daily.sunset[0])}</val></div>
-      `;
+      const details = [
+        { label: 'Umidità', val: `${cur.relative_humidity_2m}%` },
+        { label: 'Vento', val: `${Math.round(cur.wind_speed_10m)} km/h` },
+        { label: 'Prob. Pioggia', val: `${daily.precipitation_probability_max[0]}%` },
+        { label: 'Indice UV Max', val: daily.uv_index_max[0] },
+        { label: 'Pressione', val: `${Math.round(cur.surface_pressure)} hPa` },
+        { label: 'Nuvolosità', val: `${cur.cloud_cover}%` },
+        { label: 'Alba', val: formatTime(daily.sunrise[0]) },
+        { label: 'Tramonto', val: formatTime(daily.sunset[0]) }
+      ];
+
+      el('detailGrid').innerHTML = details.map((d, i) => `
+        <div class="detail-box" style="animation-delay: ${i * 0.05}s;">
+          <label>${d.label}</label>
+          <val>${d.val}</val>
+        </div>
+      `).join('');
+
+      bind3dTiltEvents();
+
     } catch(e) {
       card.innerHTML = `<div>Meteo non disponibile.</div>`;
     }
@@ -804,30 +965,69 @@
         });
       });
     } catch(e) {
-      resultsContainer.innerHTML = '<div style="font-size:12px;color:#DC2626;">Errore durante la ricerca.</div>';
+      resultsContainer.innerHTML = '<div style="font-size:12px;color:var(--ink-soft);">Errore durante la ricerca.</div>';
     }
   }
 
-  function togglePanel(panelId){
-    const panels = ['addPanel', 'globalPanel', 'settingsPanel'];
-    panels.forEach(p => {
-      if(p === panelId){
-        el(p).classList.toggle('open');
-      } else {
-        el(p).classList.remove('open');
-      }
-    });
+  function getLocation(){
+    if(!navigator.geolocation){
+      alert("La geolocalizzazione non è supportata dal tuo dispositivo/browser.");
+      return;
+    }
+
+    const btnGeo = el('btnGeo');
+    const origText = btnGeo.textContent;
+    btnGeo.textContent = "📍 Rilevamento...";
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        try {
+          const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=it`);
+          const data = await res.json();
+          
+          const cityName = data.city || data.locality || data.principalSubdivision || 'Posizione Rilevata';
+          const geoCity = {
+            name: cityName,
+            country: data.countryName || 'Italia',
+            lat: lat,
+            lon: lon,
+            admin1: data.principalSubdivision || ''
+          };
+
+          const key = cityKey(geoCity);
+          if(!cities.some(x => cityKey(x) === key)){
+            cities.unshift(geoCity);
+            saveStorage();
+          }
+
+          activeKey = key;
+          renderTabs();
+          loadData();
+        } catch(e) {
+          alert("Impossibile convertire la posizione nel nome della città. Prova ad aggiungere la città manualmente.");
+        } finally {
+          btnGeo.textContent = origText;
+        }
+      },
+      (err) => {
+        btnGeo.textContent = origText;
+        if(err.code === err.PERMISSION_DENIED){
+          alert("Permessi di posizione negati. Abilita la posizione nelle impostazioni del dispositivo per rilevare la tua città.");
+        } else {
+          alert("Impossibile rilevare la posizione attuale. Assicurati che il GPS sia attivo.");
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   }
 
   function updateNotifyButtonLabel(){
     const btn = el('btnNotify');
-    if(!('Notification' in window)){
-      btn.textContent = 'Non Supportate';
-      btn.disabled = true;
-      return;
-    }
-    if(Notification.permission === 'granted'){
-      btn.textContent = 'Notifiche Attive';
+    if(!btn) return;
+    if('Notification' in window && Notification.permission === 'granted'){
+      btn.textContent = '✓ Notifiche Attive';
       btn.style.background = '#10B981';
       btn.style.color = '#FFF';
     } else {
@@ -837,93 +1037,108 @@
     }
   }
 
-  function setupEvents(){
+  function requestNotifications(){
+    if(!('Notification' in window)){
+      showNotifyGuide();
+      return;
+    }
+
+    Notification.requestPermission().then(permission => {
+      if(permission === 'granted'){
+        updateNotifyButtonLabel();
+        new Notification("City News 📰", { body: "Notifiche attivate con successo!" });
+      } else {
+        showNotifyGuide();
+      }
+    }).catch(() => {
+      showNotifyGuide();
+    });
+  }
+
+  function showNotifyGuide(){
+    el('notifyGuideModal').classList.add('open');
+  }
+
+  function hideNotifyGuide(){
+    el('notifyGuideModal').classList.remove('open');
+  }
+
+  function init(){
+    loadStorage();
+
+    if(cities.length === 0){
+      cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
+      saveStorage();
+    }
+    
+    if(!activeKey) activeKey = cityKey(cities[0]);
+
+    renderTabs();
+    startLiveClock();
+    init3dScrollHeader();
+    loadData();
+
+    // Gestione Panel Toggles
+    const togglePanel = (panelId) => {
+      ['addPanel', 'globalPanel', 'settingsPanel'].forEach(id => {
+        if(id === panelId) el(id).classList.toggle('open');
+        else el(id).classList.remove('open');
+      });
+    };
+
     el('btnAddCity').addEventListener('click', () => togglePanel('addPanel'));
     el('btnGlobalNews').addEventListener('click', () => {
       togglePanel('globalPanel');
-      if(el('globalPanel').classList.contains('open')){
-        renderGlobalNews();
-      }
+      if(el('globalPanel').classList.contains('open')) renderGlobalNews();
     });
     el('btnSettings').addEventListener('click', () => togglePanel('settingsPanel'));
+    el('btnGeo').addEventListener('click', getLocation);
 
+    // Ricerca Città
     el('citySearchBtn').addEventListener('click', () => searchCities(el('citySearchInput').value));
     el('citySearchInput').addEventListener('keypress', (e) => {
       if(e.key === 'Enter') searchCities(el('citySearchInput').value);
     });
 
-    el('chkMultiCityNotify').addEventListener('change', saveSettings);
-
-    el('btnClearStorage').addEventListener('click', () => {
-      if(confirm('Vuoi davvero cancellare tutte le città salvate?')){
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(SETTINGS_KEY);
-        location.reload();
-      }
-    });
-
-    el('weatherCard').addEventListener('click', () => {
-      el('weatherDetails').classList.toggle('open');
-    });
-
+    // Filtri Categoria
     el('categoryBar').querySelectorAll('.cat-pill').forEach(btn => {
       btn.addEventListener('click', () => {
         el('categoryBar').querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         activeCategory = btn.getAttribute('data-cat');
-        const city = cities.find(c => cityKey(c) === activeKey);
-        if(city) renderNews(city);
+        const city = cities.find(c => cityKey(c) === activeKey) || cities[0];
+        renderNews(city);
       });
     });
 
-    el('btnGeo').addEventListener('click', () => {
-      if(!navigator.geolocation){
-        alert('Geolocalizzazione non supportata.');
-        return;
+    // Meteo Expansion Toggle
+    el('weatherCard').addEventListener('click', () => {
+      el('weatherDetails').classList.toggle('open');
+    });
+
+    // Impostazioni & Notifiche
+    el('chkMultiCityNotify').addEventListener('change', saveSettings);
+    el('btnNotify').addEventListener('click', requestNotifications);
+    el('btnOpenNotifyGuide').addEventListener('click', showNotifyGuide);
+    el('btnCloseNotifyGuide').addEventListener('click', hideNotifyGuide);
+
+    el('btnClearStorage').addEventListener('click', () => {
+      if(confirm("Sei sicuro di voler cancellare tutte le città salvate?")){
+        localStorage.removeItem(STORAGE_KEY);
+        cities = [];
+        loadStorage();
+        if(cities.length === 0){
+          cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
+          saveStorage();
+        }
+        activeKey = cityKey(cities[0]);
+        renderTabs();
+        loadData();
       }
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        try {
-          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=it`);
-          const data = await res.json();
-          if(data.results && data.results.length > 0){
-            const item = data.results[0];
-            const c = { name: item.name, country: item.country||'', lat, lon, admin1: item.admin1||'' };
-            const key = cityKey(c);
-            if(!cities.some(x => cityKey(x) === key)){
-              cities.push(c);
-              saveStorage();
-            }
-            activeKey = key;
-            renderTabs();
-            loadData();
-          }
-        } catch(e){ alert('Impossibile rilevare il nome della città.'); }
-      }, () => alert('Permesso di posizione negato o non disponibile.'));
-    });
-
-    el('btnNotify').addEventListener('click', () => {
-      if(!('Notification' in window)) return;
-      Notification.requestPermission().then(permission => {
-        updateNotifyButtonLabel();
-      });
     });
   }
 
-  // Inizializzazione
-  loadStorage();
-  if(!cities.length){
-    cities = [{ name: 'Torino', country: 'Italia', lat: 45.0703, lon: 7.6869, admin1: 'Piemonte' }];
-    saveStorage();
-  }
-  activeKey = cityKey(cities[0]);
-
-  renderTabs();
-  startLiveClock();
-  setupEvents();
-  loadData();
-
+  document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 </body>
